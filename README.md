@@ -1,16 +1,7 @@
 # duo_lingo
 
-A new Flutter project.
-
 ## Getting Started
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+![WhatsApp Görsel 2025-04-18 saat 17 03 05_987809e7](https://github.com/user-attachments/assets/57799c2f-220d-474e-8ab3-d5f0f9e6a3cc)
+![WhatsApp Görsel 2025-04-18 saat 17 03 05_4b296e84](https://github.com/user-attachments/assets/4d3ebdc9-23f2-460d-aefd-4f1aedfa0ca2)
+![WhatsApp Görsel 2025-04-18 saat 17 03 06_2ad86b0c](https://github.com/user-attachments/assets/c355ab4d-ca69-4bad-bb0c-22595437d753)

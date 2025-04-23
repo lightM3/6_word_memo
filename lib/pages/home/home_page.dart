@@ -119,6 +119,14 @@ class _HomePageState extends State<HomePage> {
   Colors.teal,
   () => Navigator.pushNamed(context, '/analysis'),
 ),
+_buildModuleCard(
+  context,
+  'Bulmaca',
+  Icons.extension,
+  Colors.indigo,
+  () => Navigator.pushNamed(context, '/wordle'),
+),
+
 
                 ],
               ),

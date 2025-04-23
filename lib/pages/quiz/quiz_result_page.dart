@@ -100,7 +100,12 @@ class QuizResultPage extends StatelessWidget {
             // Ana sayfaya dönüş butonu
             ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/home');
+                Navigator.pushNamedAndRemoveUntil(
+  context,
+  '/home',
+  (Route<dynamic> route) => false, // önceki tüm rotaları kaldırır
+);
+
               },
               child: Text('Ana Sayfaya Dön'),
             ),

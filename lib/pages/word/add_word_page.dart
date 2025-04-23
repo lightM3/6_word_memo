@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
 class AddWordPage extends StatefulWidget {
@@ -12,12 +13,24 @@ class _AddWordPageState extends State<AddWordPage> {
   final _trController = TextEditingController();
   final _sampleController = TextEditingController();
   File? _selectedImage;
+  File? _selectedAudio; 
 
   Future<void> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked != null) {
       setState(() {
         _selectedImage = File(picked.path);
+      });
+    }
+  }
+
+  Future<void> _pickAudio() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.audio, 
+    );
+    if (result != null) {
+      setState(() {
+        _selectedAudio = File(result.files.single.path!);
       });
     }
   }
@@ -29,6 +42,7 @@ class _AddWordPageState extends State<AddWordPage> {
         "tr": _trController.text,
         "sample": _sampleController.text,
         "imagePath": _selectedImage?.path,
+        "audioPath": _selectedAudio?.path,
       });
     }
   }
@@ -65,6 +79,14 @@ class _AddWordPageState extends State<AddWordPage> {
               onPressed: _pickImage,
               icon: Icon(Icons.image),
               label: Text("Resim Seç"),
+            ),
+            SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: _pickAudio,
+              icon: Icon(Icons.audio_file),
+              label: Text(_selectedAudio == null 
+                  ? "Ses Dosyası Seç" 
+                  : "Ses Yüklendi"),
             ),
             SizedBox(height: 24),
             ElevatedButton(

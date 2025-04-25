@@ -2,8 +2,8 @@
 
 **Scrum** metodolojisi kullanılarak geliştirilen bu uygulama, kullanıcıların kelime ezberleme sürecini **6 Sefer Tekrar Algoritması** ile kolaylaştırmayı hedefler. Öğrenilen kelimelerin kalıcılığını artırmak için bilimsel temelli bir yaklaşım sunar.
 
-![image](https://github.com/user-attachments/assets/e91d97e2-7023-4ac6-8e68-55abe0a6bcc3)
-
+Trello Scrum Table
+- https://trello.com/b/ODZVBkWf/6wordmemorising
 
 -
 -

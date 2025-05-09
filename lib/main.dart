@@ -16,15 +16,12 @@ class WordMemoryApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Kelime Ezberleme',
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-      ),
+      theme: ThemeData(primarySwatch: Colors.deepPurple),
       initialRoute: '/login',
       routes: {
         '/login': (context) => LoginPage(),
         '/register': (context) => RegisterPage(),
         '/forgot-password': (context) => ForgotPasswordPage(),
-        '/home': (context) => HomePage(),
         '/analysis': (context) => AnalysisPage(),
         '/wordle': (context) => WordleGamePage(),
       },

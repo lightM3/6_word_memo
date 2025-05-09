@@ -1,5 +1,9 @@
+// login_page.dart
+
+import 'package:duo_lingo/pages/home/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:duo_lingo/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -42,29 +46,32 @@ class _LoginPageState extends State<LoginPage> {
 
                 try {
                   print("Giriş işlemi başlatıldı...");
-                  String? success = await ApiService.login(username, password);
-                  print("Login sonucu: $success");
+                  String? token = await ApiService.login(username, password);
+                  print("Login sonucu: $token");
 
-                  if (success != null) {
+                  if (token != null) {
+                    // ✅ TOKEN'ı SharedPreferences'a kaydet
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString("token", token);
+
                     print("Login başarılı. Yönlendirme yapılıyor...");
-                    Navigator.pushNamed(context, '/home');
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => HomePage(token: token)),
+                    );
                   } else {
-                    print("Login başarısız");
                     setState(() {
                       errorMessage = 'Geçersiz kullanıcı adı veya şifre.';
                     });
                   }
                 } catch (e) {
-                  print("Login sırasında hata oluştu: $e");
                   setState(() {
                     errorMessage = 'Bir hata oluştu: $e';
                   });
                 }
               },
-
               child: const Text('Giriş Yap'),
             ),
-
             TextButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/forgot-password');

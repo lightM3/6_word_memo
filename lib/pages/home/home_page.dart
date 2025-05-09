@@ -5,6 +5,8 @@ import '../quiz/quiz_schedule_page.dart';
 import '../settings/settings_page.dart';
 
 class HomePage extends StatefulWidget {
+  final String token;
+  HomePage({required this.token});
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -31,7 +33,10 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Text(
                       'Hoş Geldiniz!',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: 8),
                     Text(
@@ -63,7 +68,9 @@ class _HomePageState extends State<HomePage> {
                     Colors.blue,
                     () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => WordListPage()),
+                      MaterialPageRoute(
+                        builder: (_) => WordListPage(token: widget.token),
+                      ),
                     ),
                   ),
                   _buildModuleCard(
@@ -95,39 +102,40 @@ class _HomePageState extends State<HomePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => SettingsPage(
-                            initialWordLimit: _dailyWordLimit,
-                            onWordLimitChanged: (newLimit) {
-                              setState(() {
-                                _dailyWordLimit = newLimit;
-                              });
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Kelime limiti $_dailyWordLimit olarak güncellendi.'),
-                                ),
-                              );
-                            },
-                          ),
+                          builder:
+                              (_) => SettingsPage(
+                                initialWordLimit: _dailyWordLimit,
+                                onWordLimitChanged: (newLimit) {
+                                  setState(() {
+                                    _dailyWordLimit = newLimit;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Kelime limiti $_dailyWordLimit olarak güncellendi.',
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                         ),
                       );
                     },
                   ),
                   _buildModuleCard(
-  context,
-  'Analiz Raporu',
-  Icons.bar_chart,
-  Colors.teal,
-  () => Navigator.pushNamed(context, '/analysis'),
-),
-_buildModuleCard(
-  context,
-  'Bulmaca',
-  Icons.extension,
-  Colors.indigo,
-  () => Navigator.pushNamed(context, '/wordle'),
-),
-
-
+                    context,
+                    'Analiz Raporu',
+                    Icons.bar_chart,
+                    Colors.teal,
+                    () => Navigator.pushNamed(context, '/analysis'),
+                  ),
+                  _buildModuleCard(
+                    context,
+                    'Bulmaca',
+                    Icons.extension,
+                    Colors.indigo,
+                    () => Navigator.pushNamed(context, '/wordle'),
+                  ),
                 ],
               ),
             ),

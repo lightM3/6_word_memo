@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import '../../models/word_model.dart';
-import '../../utils/dummy_data.dart';
 import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:duo_lingo/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WordleGamePage extends StatefulWidget {
   @override
@@ -12,12 +12,11 @@ class _WordleGamePageState extends State<WordleGamePage> {
   late String _targetWord;
   final int maxAttempts = 6;
   List<String> _guesses = [];
-  TextEditingController _controller = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
   bool _showLengthBoxes = true;
   bool _showLengthWarning = false;
-
-  // ScrollController ekledik
-  ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -25,18 +24,30 @@ class _WordleGamePageState extends State<WordleGamePage> {
     _selectRandomLearnedWord();
   }
 
-  void _selectRandomLearnedWord() {
-    List<Word> learnedWords =
-        DummyData.getWords().where((w) => w.repetitionCount >= 6).toList();
+  Future<void> _selectRandomLearnedWord() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("token");
 
-    if (learnedWords.isEmpty) {
-      learnedWords = DummyData.getWords();
+    if (token == null) return;
+
+    final words = await ApiService.fetchUserWords(token);
+    final learned =
+        words.where((w) => (w["repetitionCount"] ?? 0) >= 6).toList();
+
+    if (learned.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Henüz öğrenilmiş kelimeniz yok.")),
+      );
+      Navigator.pop(context);
+      return;
     }
 
     final random = Random();
-    _targetWord =
-        learnedWords[random.nextInt(learnedWords.length)].engWord.toLowerCase();
-    print("📌 Target word: $_targetWord");
+    final selected = learned[random.nextInt(learned.length)];
+    setState(() {
+      _targetWord = selected["word"]["engWord"].toString().toLowerCase();
+      print("📌 Target word: $_targetWord");
+    });
   }
 
   void _submitGuess() {
@@ -62,7 +73,6 @@ class _WordleGamePageState extends State<WordleGamePage> {
       _showLengthBoxes = false;
     });
 
-    // Yeni tahmin eklendikçe ekranı kaydır
     _scrollToBottom();
 
     if (guess == _targetWord || _guesses.length >= maxAttempts) {
@@ -71,7 +81,6 @@ class _WordleGamePageState extends State<WordleGamePage> {
   }
 
   void _scrollToBottom() {
-    // Yeni tahmin eklendikçe otomatik kaydırma
     Future.delayed(Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
@@ -82,34 +91,37 @@ class _WordleGamePageState extends State<WordleGamePage> {
   void _showEndDialog(bool won) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(won ? "🎉 Tebrikler!" : "😢 Oyun Bitti"),
-        content: Text(won
-            ? "Kelimeyi doğru tahmin ettiniz: $_targetWord"
-            : "Doğru kelime: $_targetWord"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {
-                _guesses.clear();
-                _controller.clear();
-                _showLengthBoxes = true;
-                _showLengthWarning = false;
-                _selectRandomLearnedWord();
-              });
-            },
-            child: Text("Yeniden Oyna"),
+      builder:
+          (_) => AlertDialog(
+            title: Text(won ? "🎉 Tebrikler!" : "😢 Oyun Bitti"),
+            content: Text(
+              won
+                  ? "Kelimeyi doğru tahmin ettiniz: $_targetWord"
+                  : "Doğru kelime: $_targetWord",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _guesses.clear();
+                    _controller.clear();
+                    _showLengthBoxes = true;
+                    _showLengthWarning = false;
+                  });
+                  _selectRandomLearnedWord();
+                },
+                child: Text("Yeniden Oyna"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: Text("Ana Sayfa"),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: Text("Ana Sayfa"),
-          ),
-        ],
-      ),
     );
   }
 
@@ -141,7 +153,8 @@ class _WordleGamePageState extends State<WordleGamePage> {
 
   Widget _buildGuessRow(String guess) {
     List<Color> boxColors = evaluateGuess(guess, _targetWord);
-    double boxSize = MediaQuery.of(context).size.width / (_targetWord.length + 2);
+    double boxSize =
+        MediaQuery.of(context).size.width / (_targetWord.length + 2);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -168,7 +181,8 @@ class _WordleGamePageState extends State<WordleGamePage> {
   }
 
   Widget _buildLengthBoxRow() {
-    double boxSize = MediaQuery.of(context).size.width / (_targetWord.length + 2);
+    double boxSize =
+        MediaQuery.of(context).size.width / (_targetWord.length + 2);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(_targetWord.length, (index) {
@@ -190,52 +204,59 @@ class _WordleGamePageState extends State<WordleGamePage> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(title: Text("Bulmaca (Wordle)")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            if (_showLengthWarning)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.red[400],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    "Kelime ${_targetWord.length} harfli olmalı!",
-                    style: TextStyle(color: Colors.white),
-                  ),
+      body:
+          _targetWord == null
+              ? Center(child: CircularProgressIndicator())
+              : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    if (_showLengthWarning)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red[400],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            "Kelime ${_targetWord.length} harfli olmalı!",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    if (_showLengthBoxes) _buildLengthBoxRow(),
+                    SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        itemCount: _guesses.length,
+                        itemBuilder:
+                            (_, index) => _buildGuessRow(_guesses[index]),
+                      ),
+                    ),
+                    if (_guesses.length < maxAttempts) ...[
+                      TextField(
+                        controller: _controller,
+                        decoration: InputDecoration(
+                          labelText: "Tahmininizi girin",
+                          border: OutlineInputBorder(),
+                        ),
+                        onSubmitted: (_) => _submitGuess(),
+                      ),
+                      SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: _submitGuess,
+                        child: Text("Gönder"),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            if (_showLengthBoxes) _buildLengthBoxRow(),
-            SizedBox(height: 12),
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController, // controller eklendi
-                itemCount: _guesses.length,
-                itemBuilder: (_, index) => _buildGuessRow(_guesses[index]),
-              ),
-            ),
-            if (_guesses.length < maxAttempts) ...[
-              TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  labelText: "Tahmininizi girin",
-                  border: OutlineInputBorder(),
-                ),
-                onSubmitted: (_) => _submitGuess(),
-              ),
-              SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: _submitGuess,
-                child: Text("Gönder"),
-              ),
-            ]
-          ],
-        ),
-      ),
     );
   }
 }

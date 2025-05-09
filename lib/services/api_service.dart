@@ -1,12 +1,10 @@
-// api_service.dart
-
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ApiService {
   static const baseUrl = 'http://10.138.158.31:5041';
-
+  // Kayıt olma
   static Future<String?> login(String username, String password) async {
     try {
       final url = Uri.parse('$baseUrl/api/auth/login');
@@ -25,6 +23,29 @@ class ApiService {
     } catch (e) {
       print('Error during login: $e');
       return null;
+    }
+  }
+
+  // Giriş yapma
+  static Future<bool> register(String username, String password) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/auth/register');
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'username': username, 'password': password}),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print("Register failed: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Register exception: $e");
+      return false;
     }
   }
 
@@ -60,6 +81,7 @@ class ApiService {
       return [];
     }
   }
+
   static Future<String?> uploadAudio(File audioFile, String token) async {
     final url = Uri.parse('$baseUrl/api/words/upload-audio');
     final request = http.MultipartRequest('POST', url);
@@ -80,7 +102,6 @@ class ApiService {
     }
   }
 
-
   static Future<String?> uploadImage(File imageFile, String token) async {
     final url = Uri.parse('$baseUrl/api/words/upload-image');
     final request = http.MultipartRequest('POST', url);
@@ -97,5 +118,33 @@ class ApiService {
       print('Resim yükleme hatası: ${response.statusCode}');
       return null;
     }
+  }
+
+  static Future<List<dynamic>> fetchQuiz(String token) async {
+    final url = Uri.parse('$baseUrl/api/quiz/today');
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body); // Liste döner
+    } else {
+      print('Quiz fetch failed: ${response.body}');
+      return [];
+    }
+  }
+
+  static Future<bool> submitQuiz(String token, List<int> correctWordIds) async {
+    final url = Uri.parse('$baseUrl/api/quiz/submit');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode(correctWordIds),
+    );
+    return response.statusCode == 200;
   }
 }

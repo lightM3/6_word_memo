@@ -49,6 +49,7 @@ class _QuizPageState extends State<QuizPage> {
     });
 
     Future.delayed(Duration(milliseconds: 1500), () {
+      if (!mounted) return;
       setState(() {
         _answered = false;
         _selectedOptionIndex = null;

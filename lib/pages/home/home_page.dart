@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../word/word_list_page.dart';
 import '../quiz/quiz_page.dart';
 import '../quiz/quiz_schedule_page.dart';
@@ -15,9 +16,41 @@ class _HomePageState extends State<HomePage> {
   int _dailyWordLimit = 10;
 
   @override
+  void initState() {
+    super.initState();
+    _loadDailyLimit();
+  }
+
+  void _loadDailyLimit() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _dailyWordLimit = prefs.getInt('dailyLimit') ?? 10;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('6 Tekrar Ezberleme')),
+      appBar: AppBar(
+        title: Text('6 Tekrar Ezberleme'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            tooltip: "Çıkış Yap",
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove("token");
+
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (route) => false,
+              );
+            },
+          ),
+        ],
+      ),
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -122,6 +155,7 @@ class _HomePageState extends State<HomePage> {
                       );
                     },
                   ),
+
                   _buildModuleCard(
                     context,
                     'Analiz Raporu',

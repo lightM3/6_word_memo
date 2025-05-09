@@ -24,10 +24,12 @@ class _QuizSchedulePageState extends State<QuizSchedulePage> {
 
     final fetched = await ApiService.fetchUserWords(token);
 
-    // Sadece nextRepetitionDate olanları al
+    // Sadece nextRepetitionDate olanları sırala
     fetched.sort((a, b) {
-      final dateA = DateTime.parse(a["nextRepetitionDate"]);
-      final dateB = DateTime.parse(b["nextRepetitionDate"]);
+      final dateA =
+          DateTime.tryParse(a["nextRepetitionDate"] ?? "") ?? DateTime.now();
+      final dateB =
+          DateTime.tryParse(b["nextRepetitionDate"] ?? "") ?? DateTime.now();
       return dateA.compareTo(dateB);
     });
 
@@ -49,10 +51,13 @@ class _QuizSchedulePageState extends State<QuizSchedulePage> {
                 itemBuilder: (context, index) {
                   final wordItem = userWords[index];
                   final wordData = wordItem["word"];
+
+                  // Eğer wordData null gelirse atla
+                  if (wordData == null) return SizedBox();
+
                   final repetitionCount = wordItem["repetitionCount"] ?? 0;
-                  final dateStr = wordItem["nextRepetitionDate"];
-                  final date =
-                      DateTime.tryParse(dateStr ?? "") ?? DateTime.now();
+                  final dateStr = wordItem["nextRepetitionDate"] ?? "";
+                  final date = DateTime.tryParse(dateStr) ?? DateTime.now();
                   final daysLeft = date.difference(DateTime.now()).inDays;
 
                   return Card(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
   final int initialWordLimit;
@@ -53,15 +54,15 @@ class _SettingsPageState extends State<SettingsPage> {
                     },
                   ),
                 ),
-                Text(
-                  '$_wordLimit',
-                  style: TextStyle(fontSize: 18),
-                )
+                Text('$_wordLimit', style: TextStyle(fontSize: 18)),
               ],
             ),
             SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () {
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setInt("dailyLimit", _wordLimit);
+
                 widget.onWordLimitChanged(_wordLimit);
                 Navigator.pop(context);
               },

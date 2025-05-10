@@ -88,11 +88,11 @@ class _AddWordPageState extends State<AddWordPage> {
     final success = await ApiService.addWord(_token!, wordData);
 
     if (success) {
-      Navigator.pop(context, true); // başarılı ekleme
+      Navigator.pop(context, true);
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Kelime eklenemedi.")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Bu kelime zaten sistemde mevcut.")),
+      );
     }
   }
 

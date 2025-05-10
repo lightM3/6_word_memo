@@ -1,9 +1,7 @@
-// login_page.dart
-
-import 'package:duo_lingo/pages/home/home_page.dart';
 import 'package:flutter/material.dart';
-import 'package:duo_lingo/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:duo_lingo/services/api_service.dart';
+import 'package:duo_lingo/pages/home/home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -41,23 +39,22 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () async {
-                String username = _usernameController.text;
+                String username = _usernameController.text.trim();
                 String password = _passwordController.text;
 
                 try {
-                  print("Giriş işlemi başlatıldı...");
-                  String? token = await ApiService.login(username, password);
-                  print("Login sonucu: $token");
+                  final result = await ApiService.login(username, password);
 
-                  if (token != null) {
-                    // ✅ TOKEN'ı SharedPreferences'a kaydet
+                  if (result != null && result["token"] != null) {
                     final prefs = await SharedPreferences.getInstance();
-                    await prefs.setString("token", token);
+                    await prefs.setString("token", result["token"]);
+                    await prefs.setString("username", result["username"]);
 
-                    print("Login başarılı. Yönlendirme yapılıyor...");
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => HomePage(token: token)),
+                      MaterialPageRoute(
+                        builder: (_) => HomePage(token: result["token"]),
+                      ),
                     );
                   } else {
                     setState(() {

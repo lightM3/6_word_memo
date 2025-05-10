@@ -1,68 +1,77 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:duo_lingo/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:duo_lingo/services/api_service.dart';
 
 class WordleGamePage extends StatefulWidget {
+  final bool useLearnedOnly;
+
+  const WordleGamePage({super.key, required this.useLearnedOnly});
+
   @override
-  _WordleGamePageState createState() => _WordleGamePageState();
+  State<WordleGamePage> createState() => _WordleGamePageState();
 }
 
 class _WordleGamePageState extends State<WordleGamePage> {
-  late String _targetWord;
+  String? _targetWord;
   final int maxAttempts = 6;
-  List<String> _guesses = [];
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  List<String> _guesses = [];
   bool _showLengthBoxes = true;
   bool _showLengthWarning = false;
 
   @override
   void initState() {
     super.initState();
-    _selectRandomLearnedWord();
+    _loadTargetWord();
   }
 
-  Future<void> _selectRandomLearnedWord() async {
+  Future<void> _loadTargetWord() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("token");
-
     if (token == null) return;
 
-    final words = await ApiService.fetchUserWords(token);
-    final learned =
-        words.where((w) => (w["repetitionCount"] ?? 0) >= 6).toList();
+    final words =
+        widget.useLearnedOnly
+            ? await ApiService.fetchUserWords(token)
+            : await ApiService.fetchAllWords(token);
 
-    if (learned.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Henüz öğrenilmiş kelimeniz yok.")),
-      );
-      Navigator.pop(context);
+    final filteredWords =
+        widget.useLearnedOnly
+            ? words.where((w) => (w["repetitionCount"] ?? 0) >= 6).toList()
+            : words;
+
+    if (filteredWords.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Uygun kelime bulunamadı.")));
+        Navigator.pop(context);
+      }
       return;
     }
 
     final random = Random();
-    final selected = learned[random.nextInt(learned.length)];
+    final selected = filteredWords[random.nextInt(filteredWords.length)];
+
     setState(() {
-      _targetWord = selected["word"]["engWord"].toString().toLowerCase();
-      print("📌 Target word: $_targetWord");
+      _targetWord =
+          widget.useLearnedOnly
+              ? selected["word"]["engWord"].toString().toLowerCase()
+              : selected["engWord"].toString().toLowerCase();
     });
   }
 
   void _submitGuess() {
-    String guess = _controller.text.trim().toLowerCase();
+    final guess = _controller.text.trim().toLowerCase();
+    if (_targetWord == null) return;
 
-    if (guess.length != _targetWord.length) {
-      setState(() {
-        _showLengthWarning = true;
-      });
+    if (guess.length != _targetWord!.length) {
+      setState(() => _showLengthWarning = true);
       Future.delayed(Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() {
-            _showLengthWarning = false;
-          });
-        }
+        if (mounted) setState(() => _showLengthWarning = false);
       });
       return;
     }
@@ -73,19 +82,15 @@ class _WordleGamePageState extends State<WordleGamePage> {
       _showLengthBoxes = false;
     });
 
-    _scrollToBottom();
-
-    if (guess == _targetWord || _guesses.length >= maxAttempts) {
-      _showEndDialog(guess == _targetWord);
-    }
-  }
-
-  void _scrollToBottom() {
     Future.delayed(Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
     });
+
+    if (guess == _targetWord || _guesses.length >= maxAttempts) {
+      _showEndDialog(guess == _targetWord);
+    }
   }
 
   void _showEndDialog(bool won) {
@@ -109,7 +114,7 @@ class _WordleGamePageState extends State<WordleGamePage> {
                     _showLengthBoxes = true;
                     _showLengthWarning = false;
                   });
-                  _selectRandomLearnedWord();
+                  _loadTargetWord();
                 },
                 child: Text("Yeniden Oyna"),
               ),
@@ -125,7 +130,8 @@ class _WordleGamePageState extends State<WordleGamePage> {
     );
   }
 
-  List<Color> evaluateGuess(String guess, String target) {
+  List<Color> _evaluateGuess(String guess) {
+    final target = _targetWord!;
     List<Color> colors = List.filled(guess.length, Colors.grey[400]!);
     List<bool> matched = List.filled(target.length, false);
 
@@ -152,9 +158,8 @@ class _WordleGamePageState extends State<WordleGamePage> {
   }
 
   Widget _buildGuessRow(String guess) {
-    List<Color> boxColors = evaluateGuess(guess, _targetWord);
-    double boxSize =
-        MediaQuery.of(context).size.width / (_targetWord.length + 2);
+    final colors = _evaluateGuess(guess);
+    double boxSize = MediaQuery.of(context).size.width / (guess.length + 2);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -167,7 +172,7 @@ class _WordleGamePageState extends State<WordleGamePage> {
             margin: EdgeInsets.all(2),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: boxColors[i],
+              color: colors[i],
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -181,11 +186,12 @@ class _WordleGamePageState extends State<WordleGamePage> {
   }
 
   Widget _buildLengthBoxRow() {
+    if (_targetWord == null) return SizedBox();
     double boxSize =
-        MediaQuery.of(context).size.width / (_targetWord.length + 2);
+        MediaQuery.of(context).size.width / (_targetWord!.length + 2);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(_targetWord.length, (index) {
+      children: List.generate(_targetWord!.length, (index) {
         return Container(
           width: boxSize.clamp(30.0, 45.0),
           height: boxSize.clamp(30.0, 45.0),
@@ -202,8 +208,7 @@ class _WordleGamePageState extends State<WordleGamePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(title: Text("Bulmaca (Wordle)")),
+      appBar: AppBar(title: Text("Bulmaca")),
       body:
           _targetWord == null
               ? Center(child: CircularProgressIndicator())
@@ -224,7 +229,7 @@ class _WordleGamePageState extends State<WordleGamePage> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            "Kelime ${_targetWord.length} harfli olmalı!",
+                            "Kelime ${_targetWord!.length} harfli olmalı!",
                             style: TextStyle(color: Colors.white),
                           ),
                         ),

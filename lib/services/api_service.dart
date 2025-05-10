@@ -4,29 +4,37 @@ import 'dart:convert';
 
 class ApiService {
   static const baseUrl = 'http://10.138.158.31:5041';
-  // Kayıt olma
-  static Future<String?> login(String username, String password) async {
+  // Giriş yapma
+  static Future<Map<String, dynamic>?> login(
+    String username,
+    String password,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/auth/login');
+
     try {
-      final url = Uri.parse('$baseUrl/api/auth/login');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'username': username, 'password': password}),
       );
+
       if (response.statusCode == 200) {
-        final body = json.decode(response.body);
-        return body['token'];
+        final data = json.decode(response.body);
+        return {
+          'token': data['token'],
+          'username': username, // veya backend'den dönerse: data['username']
+        };
       } else {
-        print('Login failed: ${response.body}');
+        print("Login failed: ${response.statusCode} - ${response.body}");
         return null;
       }
     } catch (e) {
-      print('Error during login: $e');
+      print("Login error: $e");
       return null;
     }
   }
 
-  // Giriş yapma
+  // Kayıt olma
   static Future<bool> register(String username, String password) async {
     try {
       final url = Uri.parse('$baseUrl/api/auth/register');
@@ -49,11 +57,13 @@ class ApiService {
     }
   }
 
+  //Kelime ekleme
   static Future<bool> addWord(
     String token,
     Map<String, dynamic> wordData,
   ) async {
     final url = Uri.parse('$baseUrl/api/words');
+
     final response = await http.post(
       url,
       headers: {
@@ -62,8 +72,12 @@ class ApiService {
       },
       body: json.encode(wordData),
     );
+
     print('Add Word Response: ${response.statusCode} - ${response.body}');
-    return response.statusCode == 200 || response.statusCode == 201;
+    if (response.statusCode == 201) return true;
+    if (response.statusCode == 400 && response.body.contains("mevcut"))
+      return false;
+    return false;
   }
 
   static Future<List<Map<String, dynamic>>> fetchUserWords(String token) async {
@@ -146,5 +160,69 @@ class ApiService {
       body: json.encode(correctWordIds),
     );
     return response.statusCode == 200;
+  }
+
+  static Future<Map<String, dynamic>> fetchAnalysis(String token) async {
+    final url = Uri.parse('$baseUrl/api/userword/analysis');
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception("Analiz verileri alınamadı.");
+    }
+  }
+
+  static Future<Map<String, int>> fetchCategoryStats(String token) async {
+    final url = Uri.parse('$baseUrl/api/userword/category-stats');
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> decoded = json.decode(response.body);
+      return {
+        for (var item in decoded)
+          item['category'] as String: item['learnedCount'] as int,
+      };
+    } else {
+      print('Kategori başarı verisi alınamadı: ${response.body}');
+      return {};
+    }
+  }
+
+  static Future<List<dynamic>> fetchAllWords(String token) async {
+    final url = Uri.parse('$baseUrl/api/words/all');
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      print("Tüm kelimeler alınamadı: ${response.statusCode}");
+      return [];
+    }
+  }
+
+  static Future<List<dynamic>> fetchDueWords(String token) async {
+    final url = Uri.parse('$baseUrl/api/userword/due');
+
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      print("Tekrar listesi alınamadı: ${response.statusCode}");
+      return [];
+    }
   }
 }

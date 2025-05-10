@@ -1,9 +1,14 @@
+import 'package:duo_lingo/pages/game/wordle_mode_selector_page.dart';
+import 'package:duo_lingo/services/api_service.dart';
+import 'package:duo_lingo/theme/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../word/word_list_page.dart';
 import '../quiz/quiz_page.dart';
 import '../quiz/quiz_schedule_page.dart';
 import '../settings/settings_page.dart';
+import 'package:provider/provider.dart';
+import 'package:duo_lingo/models/quiz_model.dart';
 
 class HomePage extends StatefulWidget {
   final String token;
@@ -14,11 +19,13 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _dailyWordLimit = 10;
+  int _dueCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadDailyLimit();
+    _fetchDueCount();
   }
 
   void _loadDailyLimit() async {
@@ -28,12 +35,34 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Future<void> _fetchDueCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("token");
+    if (token == null) return;
+
+    final dueWords = await ApiService.fetchDueWords(token);
+    setState(() {
+      _dueCount = dueWords.length;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('6 Tekrar Ezberleme'),
         actions: [
+          IconButton(
+            icon: Icon(
+              Provider.of<ThemeProvider>(context).isDarkMode
+                  ? Icons.dark_mode
+                  : Icons.light_mode,
+            ),
+            tooltip: "Tema Değiştir",
+            onPressed: () {
+              Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
+            },
+          ),
           IconButton(
             icon: Icon(Icons.logout),
             tooltip: "Çıkış Yap",
@@ -73,9 +102,10 @@ class _HomePageState extends State<HomePage> {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Bugün tekrar edilmesi gereken 3 kelimeniz var.',
+                      'Bugün tekrar edilmesi gereken $_dueCount kelimeniz var.',
                       style: TextStyle(fontSize: 16),
                     ),
+
                     SizedBox(height: 8),
                     Text(
                       'Günlük Kelime Limiti: $_dailyWordLimit',
@@ -168,7 +198,12 @@ class _HomePageState extends State<HomePage> {
                     'Bulmaca',
                     Icons.extension,
                     Colors.indigo,
-                    () => Navigator.pushNamed(context, '/wordle'),
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => WordleModeSelectorPage(),
+                      ),
+                    ),
                   ),
                 ],
               ),

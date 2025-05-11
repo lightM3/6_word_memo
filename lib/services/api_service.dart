@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ApiService {
-  static const baseUrl = 'http://10.138.158.31:5041';
+  static const baseUrl = 'http://192.168.104.16:5041';
   // Giriş yapma
   static Future<Map<String, dynamic>?> login(
     String username,
@@ -225,4 +225,24 @@ class ApiService {
       return [];
     }
   }
+
+  static Future<String?> resetPassword(String email) async {
+    final url = Uri.parse('$baseUrl/api/auth/forgot-password');
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"email": email}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data["newPassword"];
+    } else if (response.statusCode == 404) {
+      return null; // Kullanıcı bulunamadı
+    } else {
+      throw Exception("Sunucu hatası: ${response.statusCode}");
+    }
+  }
+
 }

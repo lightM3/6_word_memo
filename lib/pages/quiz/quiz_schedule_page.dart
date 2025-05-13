@@ -24,7 +24,6 @@ class _QuizSchedulePageState extends State<QuizSchedulePage> {
 
     final fetched = await ApiService.fetchUserWords(token);
 
-    // Sadece nextRepetitionDate olanları sırala
     fetched.sort((a, b) {
       final dateA =
           DateTime.tryParse(a["nextRepetitionDate"] ?? "") ?? DateTime.now();
@@ -52,7 +51,6 @@ class _QuizSchedulePageState extends State<QuizSchedulePage> {
                   final wordItem = userWords[index];
                   final wordData = wordItem["word"];
 
-                  // Eğer wordData null gelirse atla
                   if (wordData == null) return SizedBox();
 
                   final repetitionCount = wordItem["repetitionCount"] ?? 0;

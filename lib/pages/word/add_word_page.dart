@@ -87,12 +87,16 @@ class _AddWordPageState extends State<AddWordPage> {
 
     final success = await ApiService.addWord(_token!, wordData);
 
-    if (success) {
-      Navigator.pop(context, true);
-    } else {
+    final errorMessage = await ApiService.addWord(_token!, wordData);
+
+    if (errorMessage == null) {
+      Navigator.pop(context, true); // Başarılı
+    } else if (errorMessage.contains("zaten sistemde ve sizin tarafınızdan")) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Bu kelime zaten sistemde mevcut.")),
+        SnackBar(content: Text("Bu kelimeyi zaten eklemişsiniz.")),
       );
+    } else {
+      Navigator.pop(context, true); // Başkası eklemişti, şimdi ilişkilendirildi
     }
   }
 

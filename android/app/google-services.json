@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "154658144123",
+    "project_id": "mbay-memo-app",
+    "storage_bucket": "mbay-memo-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:154658144123:android:1c6f009b91260292c887de",
+        "android_client_info": {
+          "package_name": "com.example.duo_lingo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbsZ4jv-ENEx-DKla35_aDufAEZwWlBZ0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

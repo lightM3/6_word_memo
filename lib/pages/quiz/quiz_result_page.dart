@@ -28,7 +28,6 @@ class _QuizResultPageState extends State<QuizResultPage> {
     final token = prefs.getString("token");
 
     if (token != null) {
-      // Doğru bilinen kelimelerin wordId'lerini al
       final correctIds = <int>[];
 
       for (int i = 0; i < widget.quizSession.questions.length; i++) {

@@ -1,3 +1,4 @@
+import 'package:duo_lingo/config.dart';
 import 'package:flutter/material.dart';
 import 'package:duo_lingo/services/api_service.dart';
 import 'package:duo_lingo/pages/word/add_word_page.dart';

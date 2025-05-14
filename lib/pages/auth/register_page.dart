@@ -3,7 +3,6 @@ import 'package:duo_lingo/services/api_service.dart';
 
 class RegisterPage extends StatelessWidget {
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
@@ -27,15 +26,6 @@ class RegisterPage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             TextField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                labelText: 'E-posta',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            SizedBox(height: 16),
-            TextField(
               controller: _passwordController,
               obscureText: true,
               decoration: InputDecoration(
@@ -56,7 +46,6 @@ class RegisterPage extends StatelessWidget {
             ElevatedButton(
               onPressed: () async {
                 final username = _usernameController.text.trim();
-                final email = _emailController.text.trim();
                 final password = _passwordController.text.trim();
                 final confirm = _confirmPasswordController.text.trim();
 
@@ -67,11 +56,7 @@ class RegisterPage extends StatelessWidget {
                   return;
                 }
 
-                final success = await ApiService.register(
-                  username,
-                  email,
-                  password,
-                );
+                final success = await ApiService.register(username, password);
 
                 if (success) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -84,7 +69,7 @@ class RegisterPage extends StatelessWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        "❌ Kayıt başarısız! Bilgileri kontrol edin.",
+                        "❌ Kayıt başarısız! Kullanıcı adı zaten var",
                       ),
                     ),
                   );

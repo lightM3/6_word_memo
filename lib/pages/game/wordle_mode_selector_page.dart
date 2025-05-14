@@ -8,7 +8,7 @@ class WordleModeSelectorPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Wordle Modu Seç")),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -18,6 +18,7 @@ class WordleModeSelectorPage extends StatelessWidget {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 32),
+
             _buildModeCard(
               context,
               title: "Öğrenilmiş Kelimelerden",

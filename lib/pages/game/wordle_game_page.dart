@@ -28,13 +28,6 @@ class _WordleGamePageState extends State<WordleGamePage> {
     _loadTargetWord();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
   Future<void> _loadTargetWord() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("token");
@@ -51,18 +44,18 @@ class _WordleGamePageState extends State<WordleGamePage> {
             : words;
 
     if (filteredWords.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Uygun kelime bulunamadı.")));
-      Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Uygun kelime bulunamadı.")));
+        Navigator.pop(context);
+      }
       return;
     }
 
     final random = Random();
     final selected = filteredWords[random.nextInt(filteredWords.length)];
 
-    if (!mounted) return;
     setState(() {
       _targetWord =
           widget.useLearnedOnly
@@ -101,7 +94,6 @@ class _WordleGamePageState extends State<WordleGamePage> {
   }
 
   void _showEndDialog(bool won) {
-    if (!mounted) return;
     showDialog(
       context: context,
       builder:
@@ -116,7 +108,6 @@ class _WordleGamePageState extends State<WordleGamePage> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  if (!mounted) return;
                   setState(() {
                     _guesses.clear();
                     _controller.clear();
@@ -130,7 +121,7 @@ class _WordleGamePageState extends State<WordleGamePage> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  if (mounted) Navigator.pop(context);
+                  Navigator.pop(context);
                 },
                 child: Text("Ana Sayfa"),
               ),

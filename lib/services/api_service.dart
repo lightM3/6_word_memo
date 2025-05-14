@@ -1,26 +1,29 @@
 import 'dart:io';
-import 'package:duo_lingo/config.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ApiService {
-  static final String baseUrl = dotenv.env['API_URL']!;
-
+  static const baseUrl = 'http://10.138.158.31:5041';
+  // Giriş yapma
   static Future<Map<String, dynamic>?> login(
     String username,
     String password,
   ) async {
     final url = Uri.parse('$baseUrl/api/auth/login');
+
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'username': username, 'password': password}),
       );
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return {'token': data['token'], 'username': username};
+        return {
+          'token': data['token'],
+          'username': username, // veya backend'den dönerse: data['username']
+        };
       } else {
         print("Login failed: ${response.statusCode} - ${response.body}");
         return null;
@@ -31,76 +34,50 @@ class ApiService {
     }
   }
 
-  static Future<bool> register(
-    String username,
-    String email,
-    String password,
-  ) async {
-    final url = Uri.parse('$baseUrl/api/auth/register');
+  // Kayıt olma
+  static Future<bool> register(String username, String password) async {
     try {
+      final url = Uri.parse('$baseUrl/api/auth/register');
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'username': username,
-          'email': email,
-          'password': password,
-        }),
+        body: json.encode({'username': username, 'password': password}),
       );
-      return response.statusCode == 200;
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print("Register failed: ${response.body}");
+        return false;
+      }
     } catch (e) {
-      print("Register error: $e");
+      print("Register exception: $e");
       return false;
     }
   }
 
-  static Future<String?> resetPassword(String email) async {
-    final url = Uri.parse('$baseUrl/api/auth/forgot-password');
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"email": email}),
-    );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data["newPassword"];
-    } else if (response.statusCode == 404) {
-      return null;
-    } else {
-      throw Exception("Sunucu hatası: ${response.statusCode}");
-    }
-  }
-
   //Kelime ekleme
-  static Future<String?> addWord(
+  static Future<bool> addWord(
     String token,
     Map<String, dynamic> wordData,
   ) async {
     final url = Uri.parse('$baseUrl/api/words');
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode(wordData),
-      );
 
-      if (response.statusCode == 200) {
-        return null; // Başarılı
-      } else if (response.statusCode == 400) {
-        final body = json.decode(response.body);
-        if (body is String) return body;
-        return "Bir hata oluştu";
-      } else {
-        print("Kelime ekleme hatası: ${response.statusCode}");
-        return "Sunucu hatası";
-      }
-    } catch (e) {
-      print("Kelime ekleme istisnası: $e");
-      return "İstisna: $e";
-    }
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode(wordData),
+    );
+
+    print('Add Word Response: ${response.statusCode} - ${response.body}');
+    if (response.statusCode == 201) return true;
+    if (response.statusCode == 400 && response.body.contains("mevcut"))
+      return false;
+    return false;
   }
 
   static Future<List<Map<String, dynamic>>> fetchUserWords(String token) async {
@@ -119,7 +96,6 @@ class ApiService {
     }
   }
 
-  //Ses dosyası ekleme
   static Future<String?> uploadAudio(File audioFile, String token) async {
     final url = Uri.parse('$baseUrl/api/words/upload-audio');
     final request = http.MultipartRequest('POST', url);
@@ -140,7 +116,6 @@ class ApiService {
     }
   }
 
-  //Resim dosyası ekleme
   static Future<String?> uploadImage(File imageFile, String token) async {
     final url = Uri.parse('$baseUrl/api/words/upload-image');
     final request = http.MultipartRequest('POST', url);
@@ -167,7 +142,7 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      return json.decode(response.body); // Liste döner
     } else {
       print('Quiz fetch failed: ${response.body}');
       return [];
@@ -250,19 +225,4 @@ class ApiService {
       return [];
     }
   }
-
-  static Future<bool> resetPasswordWithToken(
-    String token,
-    String newPassword,
-  ) async {
-    final url = Uri.parse('$baseUrl/api/auth/reset-password');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'token': token, 'newPassword': newPassword}),
-    );
-
-    return response.statusCode == 200;
-  }
-
 }

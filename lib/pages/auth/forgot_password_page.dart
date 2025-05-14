@@ -1,27 +1,41 @@
 import 'package:flutter/material.dart';
 
 class ForgotPasswordPage extends StatelessWidget {
-  const ForgotPasswordPage({super.key});
+  final TextEditingController _emailOrUsernameController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Şifremi Unuttum')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.lock_outline, size: 80, color: Colors.grey),
-              SizedBox(height: 20),
-              Text(
-                'Bu özellik şu anda kullanıma kapalı.',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-                textAlign: TextAlign.center,
+      resizeToAvoidBottomInset: true,
+      appBar: AppBar(title: Text("Şifremi Unuttum")),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              "Şifre için kullanıcı adınızı girin.",
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 24),
+            TextField(
+              controller: _emailOrUsernameController,
+              decoration: InputDecoration(
+                labelText: 'Kullanıcı Adı',
+                border: OutlineInputBorder(),
               ),
-            ],
-          ),
+            ),
+            SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("Şifre bağlantısı gönderildi (örnek)."),
+                ));
+                Navigator.pop(context);
+              },
+              child: Text('Gönder'),
+            ),
+          ],
         ),
       ),
     );

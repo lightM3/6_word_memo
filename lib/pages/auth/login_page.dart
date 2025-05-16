@@ -14,6 +14,59 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String? errorMessage;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+      errorMessage = null;
+    });
+
+    String username = _usernameController.text.trim();
+    String password = _passwordController.text;
+
+    try {
+      final result = await ApiService.login(username, password);
+
+      if (result != null && result["token"] != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString("token", result["token"]);
+        await prefs.setString("username", result["username"]);
+
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => HomePage(token: result["token"])),
+          );
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            errorMessage = 'Geçersiz kullanıcı adı veya şifre.';
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          errorMessage = 'Bir hata oluştu: $e';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,36 +91,15 @@ class _LoginPageState extends State<LoginPage> {
               Text(errorMessage!, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: () async {
-                String username = _usernameController.text.trim();
-                String password = _passwordController.text;
-
-                try {
-                  final result = await ApiService.login(username, password);
-
-                  if (result != null && result["token"] != null) {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setString("token", result["token"]);
-                    await prefs.setString("username", result["username"]);
-
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => HomePage(token: result["token"]),
-                      ),
-                    );
-                  } else {
-                    setState(() {
-                      errorMessage = 'Geçersiz kullanıcı adı veya şifre.';
-                    });
-                  }
-                } catch (e) {
-                  setState(() {
-                    errorMessage = 'Bir hata oluştu: $e';
-                  });
-                }
-              },
-              child: const Text('Giriş Yap'),
+              onPressed: _isLoading ? null : _handleLogin,
+              child:
+                  _isLoading
+                      ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : const Text('Giriş Yap'),
             ),
             TextButton(
               onPressed: () {

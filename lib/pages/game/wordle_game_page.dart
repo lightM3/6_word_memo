@@ -21,6 +21,7 @@ class _WordleGamePageState extends State<WordleGamePage> {
   List<String> _guesses = [];
   bool _showLengthBoxes = true;
   bool _showLengthWarning = false;
+  bool _isLoading = false; // <- Spam tıklama engelleme
 
   @override
   void initState() {
@@ -29,6 +30,10 @@ class _WordleGamePageState extends State<WordleGamePage> {
   }
 
   Future<void> _loadTargetWord() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("token");
     if (token == null) return;
@@ -56,31 +61,41 @@ class _WordleGamePageState extends State<WordleGamePage> {
     final random = Random();
     final selected = filteredWords[random.nextInt(filteredWords.length)];
 
-    setState(() {
-      _targetWord =
-          widget.useLearnedOnly
-              ? selected["word"]["engWord"].toString().toLowerCase()
-              : selected["engWord"].toString().toLowerCase();
-    });
+    if (mounted) {
+      setState(() {
+        _targetWord =
+            widget.useLearnedOnly
+                ? selected["word"]["engWord"].toString().toLowerCase()
+                : selected["engWord"].toString().toLowerCase();
+        _isLoading = false;
+      });
+    }
   }
 
   void _submitGuess() {
+    if (_isLoading || _targetWord == null) return;
+
     final guess = _controller.text.trim().toLowerCase();
-    if (_targetWord == null) return;
 
     if (guess.length != _targetWord!.length) {
-      setState(() => _showLengthWarning = true);
+      if (mounted) {
+        setState(() => _showLengthWarning = true);
+      }
       Future.delayed(Duration(seconds: 2), () {
-        if (mounted) setState(() => _showLengthWarning = false);
+        if (mounted) {
+          setState(() => _showLengthWarning = false);
+        }
       });
       return;
     }
 
-    setState(() {
-      _guesses.add(guess);
-      _controller.clear();
-      _showLengthBoxes = false;
-    });
+    if (mounted) {
+      setState(() {
+        _guesses.add(guess);
+        _controller.clear();
+        _showLengthBoxes = false;
+      });
+    }
 
     Future.delayed(Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
@@ -108,13 +123,15 @@ class _WordleGamePageState extends State<WordleGamePage> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  setState(() {
-                    _guesses.clear();
-                    _controller.clear();
-                    _showLengthBoxes = true;
-                    _showLengthWarning = false;
-                  });
-                  _loadTargetWord();
+                  if (mounted) {
+                    setState(() {
+                      _guesses.clear();
+                      _controller.clear();
+                      _showLengthBoxes = true;
+                      _showLengthWarning = false;
+                    });
+                    _loadTargetWord();
+                  }
                 },
                 child: Text("Yeniden Oyna"),
               ),
@@ -159,17 +176,24 @@ class _WordleGamePageState extends State<WordleGamePage> {
 
   Widget _buildGuessRow(String guess) {
     final colors = _evaluateGuess(guess);
-    double boxSize = MediaQuery.of(context).size.width / (guess.length + 2);
+    final screenWidth = MediaQuery.of(context).size.width;
+    const horizontalPadding = 32.0;
+    const spacing = 4.0;
+
+    final n = guess.length;
+    final availableWidth = screenWidth - horizontalPadding;
+    final totalSpacing = (n - 1) * spacing;
+    final boxSize = ((availableWidth - totalSpacing) / n).clamp(10.0, 40.0);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(guess.length, (i) {
+        children: List.generate(n, (i) {
           return Container(
-            width: boxSize.clamp(30.0, 45.0),
-            height: boxSize.clamp(30.0, 45.0),
-            margin: EdgeInsets.all(2),
+            width: boxSize,
+            height: boxSize,
+            margin: EdgeInsets.only(right: i == n - 1 ? 0 : spacing),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: colors[i],
@@ -187,15 +211,23 @@ class _WordleGamePageState extends State<WordleGamePage> {
 
   Widget _buildLengthBoxRow() {
     if (_targetWord == null) return SizedBox();
-    double boxSize =
-        MediaQuery.of(context).size.width / (_targetWord!.length + 2);
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    const horizontalPadding = 32.0;
+    const spacing = 4.0;
+
+    final n = _targetWord!.length;
+    final availableWidth = screenWidth - horizontalPadding;
+    final totalSpacing = (n - 1) * spacing;
+    final boxSize = ((availableWidth - totalSpacing) / n).clamp(10.0, 40.0);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(_targetWord!.length, (index) {
+      children: List.generate(n, (i) {
         return Container(
-          width: boxSize.clamp(30.0, 45.0),
-          height: boxSize.clamp(30.0, 45.0),
-          margin: EdgeInsets.all(2),
+          width: boxSize,
+          height: boxSize,
+          margin: EdgeInsets.only(right: i == n - 1 ? 0 : spacing),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey),
             borderRadius: BorderRadius.circular(6),
@@ -203,6 +235,13 @@ class _WordleGamePageState extends State<WordleGamePage> {
         );
       }),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -255,7 +294,7 @@ class _WordleGamePageState extends State<WordleGamePage> {
                       ),
                       SizedBox(height: 12),
                       ElevatedButton(
-                        onPressed: _submitGuess,
+                        onPressed: _isLoading ? null : _submitGuess,
                         child: Text("Gönder"),
                       ),
                     ],

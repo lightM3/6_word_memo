@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ForgotPasswordPage extends StatelessWidget {
-  final TextEditingController _emailOrUsernameController = TextEditingController();
+  final TextEditingController _emailOrUsernameController =
+      TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +29,11 @@ class ForgotPasswordPage extends StatelessWidget {
             SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text("Şifre bağlantısı gönderildi (örnek)."),
-                ));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Şifre bağlantısı gönderildi (örnek)."),
+                  ),
+                );
                 Navigator.pop(context);
               },
               child: Text('Gönder'),

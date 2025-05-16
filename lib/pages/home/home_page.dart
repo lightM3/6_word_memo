@@ -8,7 +8,6 @@ import '../quiz/quiz_page.dart';
 import '../quiz/quiz_schedule_page.dart';
 import '../settings/settings_page.dart';
 import 'package:provider/provider.dart';
-import 'package:duo_lingo/models/quiz_model.dart';
 
 class HomePage extends StatefulWidget {
   final String token;
@@ -164,24 +163,7 @@ class _HomePageState extends State<HomePage> {
                     () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder:
-                              (_) => SettingsPage(
-                                initialWordLimit: _dailyWordLimit,
-                                onWordLimitChanged: (newLimit) {
-                                  setState(() {
-                                    _dailyWordLimit = newLimit;
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Kelime limiti $_dailyWordLimit olarak güncellendi.',
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                        ),
+                        MaterialPageRoute(builder: (_) => SettingsPage()),
                       );
                     },
                   ),

@@ -1,10 +1,10 @@
+import 'package:duo_lingo/pages/auth/forgot_password_page.dart' as forgot;
 import 'package:duo_lingo/pages/game/wordle_mode_selector_page.dart';
 import 'package:duo_lingo/theme/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'pages/auth/login_page.dart';
 import 'pages/auth/register_page.dart';
-import 'pages/auth/forgot_password_page.dart';
 import 'pages/analysis/analysis_page.dart';
 
 
@@ -33,7 +33,7 @@ class WordMemoryApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => RegisterPage(),
-        '/forgot-password': (context) => ForgotPasswordPage(),
+        '/forgot-password': (context) => forgot.ForgotPasswordPage(),
         '/analysis': (context) => AnalysisPage(),
         '/wordle': (context) => const WordleModeSelectorPage(),
       },

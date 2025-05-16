@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:duo_lingo/models/user_settings_model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -224,5 +225,42 @@ class ApiService {
       print("Tekrar listesi alınamadı: ${response.statusCode}");
       return [];
     }
+  }
+
+  static Future<UserSettings?> getUserSettings(String token) async {
+    final url = Uri.parse('$baseUrl/api/usersettings');
+
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return UserSettings.fromJson(json.decode(response.body));
+    } else {
+      print('UserSettings GET failed: ${response.statusCode}');
+      return null;
+    }
+  }
+
+  static Future<bool> updateUserSettings(
+    String token,
+    UserSettings settings,
+  ) async {
+    final url = Uri.parse('$baseUrl/api/usersettings');
+
+    final response = await http.put(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(settings.toJson()),
+    );
+
+    print(
+      'Settings update response: ${response.statusCode} - ${response.body}',
+    );
+    return response.statusCode >= 200 && response.statusCode < 300;
   }
 }
